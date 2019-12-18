@@ -12,7 +12,6 @@ route.post('/login', async (req, res) => {
         let check = await checkuser.checkdocid(loginuser.mobilenumber);
         if (check) {
             let checkcred = await checkuser.checkcred(loginuser);
-            console.log(checkcred);
             if (checkcred) {
                 resolve({ message: 'Login successful', status: 'success' })
             }

@@ -1,7 +1,5 @@
 var fs = require('fs');
 var helper = require('../helper/helper');
-var uflag = 0;
-var aflag = 0;
 var user = 0;
 var i = 0;
 var jsonObj = [];
@@ -10,10 +8,8 @@ var admin = require('firebase-admin');
 var db = admin.firestore();
 
 module.exports = async (req, res, next) => {
-    console.log('Req body:', req.body);
     let loginuser = req.body;
     let currenturl = req.url;
-    console.log('current url:', currenturl);
 
     //Checking user or admin 
     var url = JSON.stringify(currenturl)
@@ -28,11 +24,15 @@ module.exports = async (req, res, next) => {
     }
     switch (user) {
         case 0:
+            //Registration
             if(url.includes('register')){
                 next();
             }
+
             let data;
             var mno = JSON.stringify(loginuser.mobilenumber);
+
+            //Making user active
             function uactivesql() {
                 let c = helper.checkdocid(mno);
                 if (c) {
@@ -42,6 +42,8 @@ module.exports = async (req, res, next) => {
                     next();
                 }
             }
+
+            //Making user inactive
             function uinactivesql() {
                 let c = helper.checkdocid(mno);
                 if (c) {
@@ -51,13 +53,12 @@ module.exports = async (req, res, next) => {
                     next();
                 }
             }
+
+            //Checking active or not
             var rslt = await function (lsuser) {
                 return new Promise(async (resolve, reject) => {
-                    console.log('Uurrent user(s):', lsuser);
                     let u = Number(lsuser);
-                    console.log('Uurrent user(n):', u);
                     let c = await helper.checkdocid(u);
-                    console.log("Checking in helper:", c);
                     if (c) {
                         db.collection('user-registration').doc(lsuser).get(u).then((snapshot) => {
                             resolve(snapshot.data().active);
@@ -74,10 +75,11 @@ module.exports = async (req, res, next) => {
                         return err;
                     })
             }
+
+            //Transfer money
             if (url.includes('transfer')) {
                 let mobno = JSON.stringify(loginuser.fromuser);
                 var active =await rslt(mobno);
-                // console.log("Active transfer?:",active);
                 if(active==true){
                     next();
                 }
@@ -85,6 +87,8 @@ module.exports = async (req, res, next) => {
                     res.send({message:'Out of session',status:'fail'})
                 }
             }
+
+            //Add money to valet
             if(url.includes('addmoney') || url.includes('transactionhistory')){
                 let mobno = JSON.stringify(loginuser.mobilenumber);
                 var active =await rslt(mobno);
@@ -117,10 +121,8 @@ module.exports = async (req, res, next) => {
                 var lsuser = JSON.stringify(luser);
                 var r;
                 var rst = await rslt(lsuser);
-                console.log(rst)
                 if (rst != 2) {
                     db.collection('user-registration').doc(lsuser).get(luser).then((snapshot) => {
-                        // console.log(snapshot);
                         if (snapshot.data().mobilenumber == luser && snapshot.data().password == lpassword) {
                             r = snapshot.data().active;
                             if (r == false) {
@@ -162,14 +164,12 @@ module.exports = async (req, res, next) => {
                 var r;
 
                 result = await rslt(lsuser);
-                console.log('Logout result:', result);
                 if (result == 2) {
                     console.log({ message: 'Invalid credentials.', status: 'fail' });
                     next();
                 }
                 else {
                     db.collection('user-registration').doc(lsuser).get(luser).then((snapshot) => {
-                        // console.log(snapshot);
                         if (snapshot.data().mobilenumber == luser && snapshot.data().password == lpassword) {
                             r = snapshot.data().active;
                             if (r == true) {
@@ -201,9 +201,10 @@ module.exports = async (req, res, next) => {
 
         case 1:
             var mno = JSON.stringify(loginuser.mobilenumber);
+
+            //Making admin active
             function aactivesql() {
                 let c = helper.checkadmindocid(mno);
-                console.log("active")
                 if (c) {
                     db.collection('admin').doc(mno).update({ active: true });
                 }
@@ -211,6 +212,8 @@ module.exports = async (req, res, next) => {
                     next();
                 }
             }
+
+            //Making admin inactive
             function ainactivesql() {
                 let c = helper.checkadmindocid(mno);
                 if (c) {
@@ -220,13 +223,12 @@ module.exports = async (req, res, next) => {
                     next();
                 }
             }
+
+            //Checking admin is active or not
             var ruslt = await function (lsuser) {
                 return new Promise(async (resolve, reject) => {
-                    console.log('Uurrent user(s):', lsuser);
                     let u = Number(lsuser);
-                    console.log('Uurrent user(n):', u);
                     let c = await helper.checkdocid(u);
-                    console.log("Checking in helper:", c);
                     if (c) {
                         db.collection('admin').doc(lsuser).get(u).then((snapshot) => {
                             resolve(snapshot.data().active);
@@ -244,6 +246,7 @@ module.exports = async (req, res, next) => {
                     })
             }
             
+            //Admin Login
             if (url.includes('adminlogin')) {
                 function createJSON() {
                     var sessionID = (Math.random() * 100000);
@@ -264,10 +267,8 @@ module.exports = async (req, res, next) => {
                 var lsuser = JSON.stringify(luser);
                 var r;
                 var rst = await ruslt(lsuser);
-                console.log(rst)
                 if (rst != 2) {
                     db.collection('admin').doc(lsuser).get(luser).then((snapshot) => {
-                        // console.log(snapshot);
                         if (snapshot.data().mobilenumber == luser && snapshot.data().password == lpassword) {
                             r = snapshot.data().active;
                             if (r === false) {
@@ -299,7 +300,7 @@ module.exports = async (req, res, next) => {
                 }
             }
 
-
+            //For showing transactions
             if(url.includes('showtransactions')){
                 let mobno = JSON.stringify(loginuser.mobilenumber);
                 var active =await ruslt(mobno);
@@ -320,14 +321,12 @@ module.exports = async (req, res, next) => {
                 var r;
 
                 result = await ruslt(lsuser);
-                console.log('Logout result:', result);
                 if (result == 2) {
                     console.log({ message: 'Invalid credentials.', status: 'fail' });
                     next();
                 }
                 else {
                     db.collection('admin').doc(lsuser).get(luser).then((snapshot) => {
-                        // console.log(snapshot);
                         if (snapshot.data().mobilenumber == luser && snapshot.data().password == lpassword) {
                             r = snapshot.data().active;
                             if (r == true) {
@@ -359,9 +358,4 @@ module.exports = async (req, res, next) => {
         default: next();
             break;
     }
-    // }
-    // else {
-    //     res.send({ message: "Connection failed", status: "fail" });
-    // }
-    // });
 }

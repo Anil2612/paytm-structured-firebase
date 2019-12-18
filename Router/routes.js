@@ -1,8 +1,6 @@
 const route=require('express').Router();
-var app=require('express')();
-/**
- * All requied file will be configured below.
- */
+
+ // All requied file will be configured below.
 
 var getusers=require('../Controller/getusers');
 var registerusers=require('../Controller/userregistration');
@@ -15,9 +13,8 @@ var tdetails=require('../Controller/transactiondetails');
 var dbu=require('../Controller/updatedb');
 var logout=require('../Controller/logout');
 
-/**
- * All Controllers will be called from below lines.
- */
+
+ // All Controllers will be called from below lines.
 
 route.use('/users',getusers);
 route.use('/user',registerusers);

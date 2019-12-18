@@ -13,7 +13,6 @@ route.get('/transactionhistory', (req, res) => {
             reject({ message: 'Wrong credentials or amount',status:'fail' });
         } 
         let checkid=await checkuser.checkdocid(t_history.mobilenumber);
-        console.log(t_history.mobilenumber);
         if(checkid){
            await db.collection('transaction-history').get().then((snapshot)=>{
                 snapshot.docs.forEach(doc=>{

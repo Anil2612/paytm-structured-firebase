@@ -22,7 +22,6 @@ route.post('/register', async (req, res) => {
             if (mno == 10) {
                 if ((user.password).length > 0) {
                     let check=await checkuser.checkdocid(user.mobilenumber);
-                    console.log(check);
                     if(!check){
                         db.collection('user-registration').doc(mobilenumber).set({ 'mobilenumber': user.mobilenumber, 'password': user.password, 'email': user.email,'balance':0, 'active': false });
                         resolve({ message: 'Thank you for registering to paytm', status: 'success' })   
